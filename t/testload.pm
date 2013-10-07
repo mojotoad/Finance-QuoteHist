@@ -20,6 +20,7 @@ require Exporter;
   network_ok
   new_quotehist
   modules
+  all_modules
   sources
   modes
   granularities
@@ -29,13 +30,16 @@ require Exporter;
   DEV_TESTS
 );
 
-my $Dat_Dir;
+my($Dat_Dir, $Mod_Dir);
 BEGIN {
   my($vol, $dir, $file) = File::Spec->splitpath(__FILE__);
   my @parts = File::Spec->splitdir($dir);
   pop @parts while @parts && $parts[-1] ne 't';
-  $dir = File::Spec->catdir(@parts, 'dat');
-  $Dat_Dir = File::Spec->catpath($vol, $dir, '');
+  my $ddir = File::Spec->catdir(@parts, 'dat');
+  $Dat_Dir = File::Spec->catpath($vol, $ddir, '');
+  pop @parts;
+  my $mdir = File::Spec->catdir(@parts, 'lib', 'Finance', 'QuoteHist');
+  $Mod_Dir = File::Spec->catpath($vol, $mdir, '');
 }
 
 my $csv_txt;
@@ -138,6 +142,18 @@ sub basis {
   }
   return unless $basis;
   @$basis;
+}
+
+sub all_modules {
+  my %mods;
+  for my $f (glob "$Mod_Dir/*.pm") {
+    my($vol, $dir, $base) = File::Spec->splitpath($f);
+    $base =~ s/\.pm$//;
+    next if $base eq 'Generic';
+    $mods{lc($base)} = "Finance::QuoteHist::$base";
+  }
+  $mods{plain} = "Finance::QuoteHist";
+  wantarray ? %mods : \%mods;
 }
 
 1;

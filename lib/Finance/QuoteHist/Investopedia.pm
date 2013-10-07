@@ -14,15 +14,14 @@ Date::Manip::Date_Init("TZ=GMT");
 
 # Example URL:
 #
-# http://simulator.investopedia.com/stocks/historicaldata.aspx?SearchType=0&s=IBM&dateStart=2008-5-8&dateEnd=2009-6-7&Download=1
-#
-# for dividend:
-#
-# http://simulator.investopedia.com/stocks/historicaldata.aspx?SearchType=1&s=NOVAD&dateStart=2010-5-30&dateEnd=2010-6-7
+# http://www.investopedia.com/markets/stocks/ibm/historical/?page=1&StartDate=07/01/2012&EndDate=07/01/2013&HistoryType=Daily
 #
 # for split:
 #
-# http://simulator.investopedia.com/stocks/historicaldata.aspx?SearchType=2&s=NOVAD&dateStart=2010-5-30&dateEnd=2010-6-7
+# http://www.investopedia.com/markets/stocks/gis/historical/?StartDate=01/01/2009&EndDate=07/01/2013&HistoryType=Splits
+#
+# for dividend:
+#
 
 sub new {
   my $that = shift;
@@ -34,14 +33,10 @@ sub new {
   $self;
 }
 
-sub url_base_html {
-  'http://simulator.investopedia.com/stocks/historicaldata.aspx'
-}
-
 sub labels {
   my($self, %parms) = @_;
   my $target_mode = $parms{target_mode} || $self->target_mode;
-  return(qw( date split )) if $target_mode eq 'split';
+  return(qw( date denominator numerator )) if $target_mode eq 'split';
   $self->SUPER::labels(%parms);
 }
 
@@ -51,17 +46,6 @@ sub url_maker {
   my $parse_mode  = $parms{parse_mode}  || $self->parse_mode;
   # *always* block unknown target/mode cominations
   return undef unless $parse_mode eq 'html';
-  my $search_type;
-  if ($target_mode eq 'quote') {
-    $search_type = 0;
-  }
-  elsif ($target_mode eq 'dividend') {
-    $search_type = 1;
-  }
-  elsif ($target_mode eq 'split') {
-    $search_type = 2;
-  }
-  my $download = $target_mode eq 'quote' ? 1 : 0;
 
   my($ticker, $start_date, $end_date) =
     @parms{qw(symbol start_date end_date)};
@@ -71,15 +55,45 @@ sub url_maker {
   my($sy, $sm, $sd) = $self->ymd($start_date);
   my($ey, $em, $ed) = $self->ymd($end_date);
   my @base_parms = (
-    "SearchType=$search_type",
-    "s=$ticker",
-    "dateStart=$sy-$sm-$sd",
-    "dateEnd=$ey-$em-$ed",
+    "StartDate=$sm/$sd/$sy",
+    "EndDate=$em/$ed/$ey",
   );
-  push(@base_parms, 'Download=1') if $download;
-  my @urls = join('?', $self->url_base_html, join('&', @base_parms));
+  my $base_url = join('/', "http://www.investopedia.com/markets/stocks",
+                            lc $ticker,
+                            'historical/');
+  if ($target_mode eq 'quote') {
+    push(@base_parms, "HistoryType=Daily");
+  }
+  elsif ($target_mode eq 'dividend') {
+    push(@base_parms, "HistoryType=Dividends");
+  }
+  elsif ($target_mode eq 'split') {
+    push(@base_parms, "HistoryType=Splits");
+  }
+  my $maker;
+  if ($target_mode eq 'quote') {
+    push(@base_parms, "HistoryType=Daily");
+    my $page = 0;
+    $maker = sub {
+      my $url = join('?', $base_url, join('&', @base_parms, "page=$page"));
+      ++$page;
+      $url;
+    };
+  }
+  else {
+    my @urls = join('?', $base_url, join('&', @base_parms));
+    $maker = sub { pop @urls };
+  }
+  return $maker;
+}
 
-  sub { pop @urls };
+sub splits {
+  my $self = shift;
+  my @rows;
+  for my $r ($self->SUPER::splits()) {
+    push(@rows, [$r->[0], $r->[1], join(':', $r->[2], $r->[3])]);
+  }
+  wantarray ? @rows : \@rows;
 }
 
 1;
