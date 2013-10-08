@@ -18,15 +18,6 @@ The real workhorse of the bundle, a sub class of
 LWP::UserAgent. Site-specific modules are sub classes
 of this module.
 
-Current site-specific modules include:
-
-Finance::QuoteHist::Yahoo
-Finance::QuoteHist::Yahoo::Australia
-Finance::QuoteHist::QuoteMedia
-Finance::QuoteHist::Google
-Finance::QuoteHist::BusinessWeek
-Finance::QuoteHist::MSN
-
 
 INSTALLATION
 
@@ -50,22 +41,18 @@ Changes for recent changes.
 
 SUPPORT
 
-There is a mailing list available. To view past messages or subscribe,
-go to:
+The source code is tracked on GitHub:
 
-   http://lists.sourceforge.net/mailman/listinfo/quotehist-general
+https://github.com/mojotoad/Finance-QuoteHist
 
-Questions and comments can also be directed to Matt Sisk <sisk@mojotoad.com>
+Problems can be reported there. Questions and comments can also be
+directed to Matt Sisk <sisk@mojotoad.com>
 
 AVAILABILITY
 
-The library is available from CPAN:
+In addition to GitHub, the library is available from CPAN:
 
    http://www.cpan.org/authors/id/M/MS/MSISK/
-
-The latest version is also available at:
-
-   http://www.mojotoad.com/sisk/projects/Finance-QuoteHist/
 
 
 DISCLAIMER 
@@ -95,7 +82,7 @@ Weigel for their bug-spotting.
 
 COPYRIGHT
 
-Copyright (c) 1999-2011 Matthew P. Sisk.  All rights reserved.
+Copyright (c) 1999-2013 Matthew P. Sisk.  All rights reserved.
 All wrongs revenged. This program is free software; you can
 redistribute it and/or modify it under the same terms as
 Perl itself.
