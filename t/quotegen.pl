@@ -23,13 +23,13 @@ my $q_sym   = 'IBM';
 my $q_start = '2012/07/01';
 my $q_end   = '2013/07/01';
 
-my $s_sym   = 'GIS';
+my $s_sym   = 'NKE';
 my $s_start = '2009/01/01';
-my $s_end   = '2011/08/01';
+my $s_end   = '2013/10/01';
 
 my $d_sym   = 'INTC';
-my $d_start = '2009/01/01';
-my $d_end   = '2011/08/01';
+my $d_start = '2011/01/01';
+my $d_end   = '2013/10/01';
 
 sub new_qh {
   my($m, $sym, $s, $e, $g) = @_;

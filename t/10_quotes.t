@@ -1,7 +1,7 @@
 use strict;
 
 my $tcount;
-BEGIN { $tcount = 28 }
+BEGIN { $tcount = 20 }
 use Test::More tests => $tcount;
 
 use FindBin;
