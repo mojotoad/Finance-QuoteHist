@@ -1,5 +1,9 @@
 Revision history for Perl extension Finance::QuoteHist.
 
+1.20  Tue Oct  8 14:54:48 EDT 2013
+    - added DailyFinance
+    - removed QuoteMedia, MSN, Investopedia
+
 1.19  Mon Aug 29 11:08:08 EDT 2011
     - fixed test data window (1.17 was a little *too*
       recent for reliable monthly tests)
