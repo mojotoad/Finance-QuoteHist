@@ -23,7 +23,7 @@ Date::Manip::Date_Init("TZ=GMT");
 
 use vars qw($VERSION);
 
-$VERSION = '1.19';
+$VERSION = '1.20';
 
 my $CSV_XS_Class = 'Text::CSV_XS';
 my $CSV_PP_Class = 'Text::CSV_PP';
@@ -1316,7 +1316,7 @@ necessary to retrieve the data over a list of symbols within the given
 date range, for a particular target (quotes, dividends, splits).
 Different sites have different formats and different limitations on how
 many quotes are returned for each query. See Finance::QuoteHist::Yahoo
-and Finance::QuoteHist::QuoteMedia for some examples of how to do this.
+for an example of how to do this.
 
 For more complicated sites, such as Yahoo, overriding additonal methods
 might be necessary for dealing with things such as splits and dividends.
@@ -1586,7 +1586,7 @@ Matthew P. Sisk, E<lt>F<sisk@mojotoad.com>E<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2000-2011 Matthew P. Sisk. All rights reserved. All wrongs
+Copyright (c) 2000-2013 Matthew P. Sisk. All rights reserved. All wrongs
 revenged. This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

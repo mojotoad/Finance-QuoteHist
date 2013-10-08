@@ -10,13 +10,11 @@ use Carp;
 
 use Finance::QuoteHist::Generic;
 
-$VERSION = '1.19';
+$VERSION = '1.20';
 
 my @DEFAULT_ENGINES = qw(
   Finance::QuoteHist::Yahoo
-  Finance::QuoteHist::QuoteMedia
   Finance::QuoteHist::Google
-  Finance::QuoteHist::MSN
 );
 
 sub new {
@@ -99,8 +97,6 @@ select a I<lineup> for you, the default being:
 
     Finance::QutoeHist::Yahoo
     Finance::QutoeHist::Google
-    Finance::QuoteHist::QuoteMedia
-    Finance::QutoeHist::MSN
 
 Once instantiated, this module behaves identically to the first module
 in the I<lineup>, sharing all of that module's methods.
@@ -168,7 +164,7 @@ Matthew P. Sisk, E<lt>F<sisk@mojotoad.com>E<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2000-2011 Matthew P. Sisk. All rights reserved. All wrongs
+Copyright (c) 2000-2013 Matthew P. Sisk. All rights reserved. All wrongs
 revenged. This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
