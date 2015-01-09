@@ -1,8 +1,14 @@
-use Test::More tests => 8;
-
 use FindBin;
 use lib $FindBin::RealBin;
 use testload;
+
+my $tcount;
+BEGIN {
+  my @mods = modules();
+  $tcount = scalar @mods + 2;
+}
+
+use Test::More tests => $tcount;
 
 BEGIN {
   use_ok('Finance::QuoteHist');

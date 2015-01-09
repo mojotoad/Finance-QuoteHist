@@ -3,12 +3,12 @@ Changes
 LICENSE
 MANIFEST
 Makefile.PL
+META.json
+META.yml
 lib/Finance/QuoteHist.pm
 lib/Finance/QuoteHist/Generic.pm
 lib/Finance/QuoteHist/Yahoo.pm
-lib/Finance/QuoteHist/QuoteMedia.pm
 lib/Finance/QuoteHist/StockNod.pm
-lib/Finance/QuoteHist/BusinessWeek.pm
 lib/Finance/QuoteHist/Google.pm
 lib/Finance/QuoteHist/DailyFinance.pm
 lib/Finance/QuoteHist/Yahoo/Australia.pm

@@ -1,8 +1,8 @@
-use strict;
+use FindBin;
+use lib $FindBin::RealBin;
+use testload;
 
-my $tcount;
-BEGIN { $tcount = 22 }
-use Test::More tests => $tcount;
+use Test::More tests => 16;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -36,8 +36,8 @@ sub quote_cmp {
   my @rows = $q->quotes;
   cmp_ok(scalar @rows, '==', scalar @$dat, "$label (rows)");
   for my $i (0 .. $#rows) {
-    # drop adjusted quotes, too variable for testing
-    pop @{$rows[$i]} while @{$rows[$i]} > 7;
+    # drop adjusted and volume, too variable for testing
+    pop @{$rows[$i]} while @{$rows[$i]} > 6;
     $rows[$i] = join(':', @{$rows[$i]});
   }
   is_deeply(\@rows, $dat, "$label (content)");

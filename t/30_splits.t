@@ -18,7 +18,7 @@ SKIP: {
         unless DEV_TESTS || $src eq GOLDEN_CHILD;
       eval "use $m";
       my %parms = ( class => $m );
-      dividend_cmp(
+      split_cmp(
         $sym, $start, $end,
         "direct split ($src)",
         $dat, %parms
@@ -27,7 +27,7 @@ SKIP: {
   }
 }
 
-sub dividend_cmp {
+sub split_cmp {
   @_ >= 5 or die "Problem with args\n";
   my($symbol, $start_date, $end_date, $label, $dat, %parms) = @_;
   my $q = new_quotehist($symbol, $start_date, $end_date, %parms);

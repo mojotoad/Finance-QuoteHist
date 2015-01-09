@@ -23,7 +23,7 @@ Date::Manip::Date_Init("TZ=GMT");
 
 use vars qw($VERSION);
 
-$VERSION = '1.20';
+$VERSION = '1.21';
 
 my $CSV_XS_Class = 'Text::CSV_XS';
 my $CSV_PP_Class = 'Text::CSV_PP';
@@ -396,6 +396,13 @@ sub getter {
           $rows = \@filtered;
         }
 
+        if ($extractions{$target_mode}) {
+          $rows = [@{$extractions{$target_mode}}];
+          print STDERR "Coopted to ", scalar @$rows,
+            " rows after $target_mode extraction redundancy.\n"
+            if $self->{verbose};
+        }
+
         if (@$rows) {
           # Normalization steps
 
@@ -417,6 +424,8 @@ sub getter {
           # Do the same for the extraction rows, plus store the
           # extracted rows
           foreach my $mode (keys %extractions) {
+            # _store_results splices each row...don't do it twice
+            next if $mode eq $target_mode;
             $self->target_mode($mode);
             $self->number_normalize_rows($extractions{$mode});
             $self->_target_source($mode, $s, ref $self);

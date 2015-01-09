@@ -4,7 +4,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 use Carp;
 
-$VERSION = '1.05';
+$VERSION = '1.06';
 
 use Finance::QuoteHist::Generic;
 @ISA = qw(Finance::QuoteHist::Generic);
@@ -69,69 +69,69 @@ sub new {
   my $self = __PACKAGE__->SUPER::new(%parms);
   bless $self, $class;
 
-  $self->set_label_pattern(
-    target_mode => 'dividend',
-    parse_mode  => 'html',
-    label       => 'div',
-    pattern     => qr/(Open|Div)/
-  );
-
   $self;
 }
 
 # override these for other Yahoo sites
 sub url_base_csv    { 'http://ichart.finance.yahoo.com/table.csv' }
 sub url_base_html   { 'http://finance.yahoo.com/q/hp' }
-sub url_base_splits { 'http://finance.yahoo.com/q/bc' }
 
 sub granularities { qw( daily weekly monthly ) }
 
 # Yahoo can fetch dividends and splits. They can be extracted from
 # regular quote results or queried directly.
 
-sub html_parser {
-  my($self, %parms) = @_;
-  my $target_mode = $parms{target_mode} || $self->target_mode;
-  return $self->SUPER::html_parser(%parms) unless $target_mode eq 'split';
-  sub {
-    my $data = shift;
-    my $html_string;
-    if (ref $data) {
-      local($/);
-      $html_string = <$data>;
-    }
-    else {
-      $html_string = $data;
-    }
-    my %te_parms = (
-      headers => ['Splits:'],
-      debug   => $self->{debug},
-    );
-    my $te = HTML::TableExtract->new(%te_parms);
-    $te->parse($html_string);
-    my $table = $te->first_table_found || return [];
-    my($split_line) = grep(defined && /split/i, $table->hrow);
-    $split_line =~ s/^\s*splits:?\s*//i;
-    my @rows;
-    foreach (grep(/\w+/, split(/\]\s*,\s+/, $split_line))) {
-      s/\s+$//;
-      next if /none/i;
-      next unless s/\s*\[(\d+):(\d+).*$//;
-      my($post, $pre) = ($1, $2);
-      my $date = ParseDate($_)
-        or croak "Problem parsing date string '$_'\n";
-      push(@rows, [$date, $post, $pre]);
-    }
-    \@rows;
-  };
-}
+#sub html_parser {
+#  my($self, %parms) = @_;
+#  my $target_mode = $parms{target_mode} || $self->target_mode;
+#  return $self->SUPER::html_parser(%parms) unless $target_mode eq 'split';
+#  sub {
+#    my $data = shift;
+#    my $html_string;
+#    if (ref $data) {
+#      local($/);
+#      $html_string = <$data>;
+#    }
+#    else {
+#      $html_string = $data;
+#    }
+#    my %te_parms = (
+#      headers => ['Splits:'],
+#      debug   => $self->{debug},
+#    );
+#    my $te = HTML::TableExtract->new(%te_parms);
+#    $te->parse($html_string);
+#    my $table = $te->first_table_found || return [];
+#    my($split_line) = grep(defined && /split/i, $table->hrow);
+#    $split_line =~ s/^\s*splits:?\s*//i;
+#    my @rows;
+#    foreach (grep(/\w+/, split(/\]\s*,\s+/, $split_line))) {
+#      s/\s+$//;
+#      next if /none/i;
+#      next unless s/\s*\[(\d+):(\d+).*$//;
+#      my($post, $pre) = ($1, $2);
+#      my $date = ParseDate($_)
+#        or croak "Problem parsing date string '$_'\n";
+#      push(@rows, [$date, $post, $pre]);
+#    }
+#    \@rows;
+#  };
+#}
 
 sub labels {
   my $self = shift;
   my %parms = @_;
-  my $target_mode = $self->target_mode;
-  my @labels = $self->SUPER::labels(%parms);
-  push(@labels, 'adj') if $target_mode eq 'quote';
+  my $target_mode = $parms{target_mode} || $self->target_mode;
+  my $parse_mode  = $parms{parse_mode}  || $self->parse_mode;
+  my @labels;
+  if ($target_mode eq 'split') {
+    @labels = qw( date open );
+    $self->parse_mode('html');
+  }
+  else {
+    @labels = $self->SUPER::labels(%parms);
+    push(@labels, 'adj') if $target_mode eq 'quote';
+  }
   @labels;
 }
 
@@ -142,12 +142,14 @@ sub extractors {
   my %parms = @_;
   my $target_mode = $parms{target_mode} || $self->target_mode;
   my $parse_mode  = $parms{parse_mode}  || $self->parse_mode;
+  if ($target_mode eq 'split') {
+    $parse_mode = 'html';
+    $self->parse_mode($parse_mode);
+  }
   return () if $parse_mode eq 'csv';
-  return () unless $target_mode eq 'quote' || $target_mode eq 'dividend';
+  my %extractors;
   my $date_column = $self->label_column('date');
   my $split_column = 1;
-  my %extractors;
-  # for both quote and dividend results in html mode
   $extractors{'split'} = sub {
     my $row = shift;
     die "row as array ref required" unless ref $row;
@@ -156,19 +158,17 @@ sub extractors {
     return undef unless $post && $pre;
     [ $row->[$date_column], $post, $pre ];
   };
-  if ($target_mode eq 'quote') {
-    my $div_column = 1;
-    $extractors{dividend} = sub {
-      # Get a row as array ref, see if it contains dividend info. If so,
-      # return another array ref with the extracted info.
-      my $row = shift;
-      die "row as array ref required\n" unless ref $row;
-      # example dividend: "$0.01 Cash Dividend"
-      my($div) = $row->[$div_column] =~ /\$*(\d*\.\d+).*Dividend/i;
-      return undef unless defined $div;
-      [ $row->[$date_column], $row->[$div_column] ];
-    };
-  }
+  #my $div_column = 1;
+  #$extractors{dividend} = sub {
+  #  # Get a row as array ref, see if it contains dividend info. If so,
+  #  # return another array ref with the extracted info.
+  #  my $row = shift;
+  #  die "row as array ref required\n" unless ref $row;
+  #  # example dividend: "$0.01 Cash Dividend"
+  #  my($div) = $row->[$div_column] =~ /\$*(\d*\.\d+).*Dividend/i;
+  #  return undef unless defined $div;
+  #  [ $row->[$date_column], $row->[$div_column] ];
+  #};
   %extractors;
 }
 
@@ -198,8 +198,7 @@ sub url_maker {
 
   if ($target_mode eq 'split') {
     $self->parse_mode('html');
-    my @urls = $self->url_base_splits() . "?s=$ticker&t=my";
-    return sub { pop @urls };
+    $parse_mode = 'html';
   }
 
   my $base_url = $parse_mode eq 'csv' ? $self->url_base_csv() :
@@ -219,14 +218,13 @@ sub url_maker {
   $ticker ||= 'BOOLEAN';
   push(@base_parms, "g=$g", "s=$ticker");
   
-  if ($parse_mode eq 'html' && $target_mode eq 'quote' || $target_mode eq 'dividend') {
+  if ($parse_mode eq 'html') {
     my $cursor = 0;
     my $window = 66;
     return sub {
       my $url = $base_url . '?' .
         join('&', @base_parms,
                  "z=$window", "y=$cursor");
-      $url .= '&ignore=.csv' if $parse_mode eq 'csv';
       $cursor += $window;
       $url;
     }
@@ -377,7 +375,7 @@ Matthew P. Sisk, E<lt>F<sisk@mojotoad.com>E<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2000-2010 Matthew P. Sisk. All rights reserved. All wrongs
+Copyright (c) 2000-2014 Matthew P. Sisk. All rights reserved. All wrongs
 revenged. This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
 

@@ -65,11 +65,12 @@ for my $f (glob("$Dat_Dir/*.dat")) {
   my($sym, $start, $end) = split(/,/, shift @lines);
   if ($1 eq 'quote') {
     my($mode, $gran, $source) = split(/_/, $label);
-    if ($lines[0] =~ tr/:/:/ > 6) {
-      # drop adjusted, they've proven to be too variable for testing
+    if ($lines[0] =~ tr/:/:/ > 5) {
+      # drop adjusted and volume, they've proven to be too
+      # variable for testing
       for my $i (0 .. $#lines) {
         my @line = split(/:/, $lines[$i]);
-        pop @line while @line > 7;
+        pop @line while @line > 6;
         $lines[$i] = join(':', @line);
       }
     }
