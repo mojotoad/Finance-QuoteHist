@@ -378,6 +378,7 @@ sub getter {
           while ($row = pop(@$rows)) {
             my $erow;
             foreach my $mode (sort keys %extractors) {
+              $extractions{$mode} ||= [];
               my $em = $extractors{$mode};
               if ($erow = $em->($row)) {
                 print STDERR "$s extract ($mode) got $s, ",

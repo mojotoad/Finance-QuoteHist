@@ -197,8 +197,10 @@ sub url_maker {
   }
 
   if ($target_mode eq 'split') {
-    $self->parse_mode('html');
-    $parse_mode = 'html';
+    $self->parse_mode($parse_mode = 'html');
+  }
+  else {
+    $self->parse_mode($parse_mode = 'csv');
   }
 
   my $base_url = $parse_mode eq 'csv' ? $self->url_base_csv() :
