@@ -1,5 +1,9 @@
 Revision history for Perl extension Finance::QuoteHist.
 
+1.22  Mon Apr 20 14:15:32 EDT 2015
+    - fixed dividend/split entanglement on yahoo
+      rt.cpan.org #103759
+
 1.21  Fri Jan  9 11:25:10 EST 2015
     - fixed splits on yahoo
     - removed BusinessWeek
