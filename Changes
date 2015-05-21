@@ -1,5 +1,9 @@
 Revision history for Perl extension Finance::QuoteHist.
 
+1.23  Thu May 21 11:48:11 EDT 2015
+    - patched quotes test to properly skip tests
+      without network connectivity (RT #104358)
+
 1.22  Mon Apr 20 14:15:32 EDT 2015
     - fixed dividend/split entanglement on yahoo
       rt.cpan.org #103759
