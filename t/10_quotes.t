@@ -2,7 +2,9 @@ use FindBin;
 use lib $FindBin::RealBin;
 use testload;
 
-use Test::More tests => 16;
+my $tcount;
+BEGIN { $tcount = 16 }
+use Test::More tests => $tcount;
 
 use FindBin;
 use lib $FindBin::RealBin;
