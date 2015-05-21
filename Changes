@@ -1,6 +1,7 @@
 Revision history for Perl extension Finance::QuoteHist.
 
 1.23  Thu May 21 11:48:11 EDT 2015
+    - fixed divident/split entanglement for yahoo
     - patched quotes test to properly skip tests
       without network connectivity (RT #104358)
 
