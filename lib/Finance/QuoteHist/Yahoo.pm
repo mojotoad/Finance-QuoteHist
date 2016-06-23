@@ -11,7 +11,6 @@ use Finance::QuoteHist::Generic;
 
 use HTML::TableExtract 2.07;
 use Date::Manip;
-Date::Manip::Date_Init("TZ=GMT");
 
 # Example for HTML output:
 #

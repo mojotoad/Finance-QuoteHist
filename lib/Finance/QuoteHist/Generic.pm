@@ -19,7 +19,6 @@ use Carp;
 use LWP::UserAgent;
 use HTTP::Request;
 use Date::Manip;
-Date::Manip::Date_Init("TZ=GMT");
 
 use vars qw($VERSION);
 
