@@ -1327,7 +1327,7 @@ Different sites have different formats and different limitations on how
 many quotes are returned for each query. See Finance::QuoteHist::Yahoo
 for an example of how to do this.
 
-For more complicated sites, such as Yahoo, overriding additonal methods
+For more complicated sites, such as Yahoo, overriding additional methods
 might be necessary for dealing with things such as splits and dividends.
 
 =head1 METHODS
