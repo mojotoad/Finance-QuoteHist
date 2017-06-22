@@ -75,6 +75,7 @@ my @Scalar_Flags = qw(
   granularity
   auto_proxy
   row_filter
+  ua_params
 );
 my $SF_pat = join('|', @Scalar_Flags);
 
@@ -90,7 +91,7 @@ my $HF_pat = join('|', @Hash_Flags);
 sub new {
   my $that  = shift;
   my $class = ref($that) || $that;
-  my(@pass, %parms, $k, $v);
+  my(%parms, $k, $v);
   while (($k,$v) = splice(@_, 0, 2)) {
     if ($k eq 'start_date' || $k eq 'end_date' && $v !~ /^\s*$/) {
       $parms{$k} = __PACKAGE__->date_standardize($v);
@@ -148,7 +149,6 @@ sub new {
   elsif ($parms{auto_proxy}) {
     $ua_params->{env_proxy} = 1 if $ENV{http_proxy};
   }
-  delete $parms{env_proxy};
   $self->{ua} = LWP::UserAgent->new(%$ua_params);
 
   if ($self->granularity !~ /^d/i) {
@@ -409,8 +409,8 @@ sub getter {
           if ($target_mode eq 'split') {
             if (@{$rows->[0]} == 2) {
               foreach (@$rows) {
-                if ($_->[-1] =~ /split\s+(\d+):(\d+)/is) {
-                  splice(@$_, -1, 1, $1, $2);
+                if ($_->[-1] =~ /(split\s+)?(\d+)\D+(\d+)/is) {
+                  splice(@$_, -1, 1, $2, $3);
                 }
               }
             }

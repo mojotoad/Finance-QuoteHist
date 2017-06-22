@@ -9,61 +9,40 @@ $VERSION = '1.06';
 use Finance::QuoteHist::Generic;
 @ISA = qw(Finance::QuoteHist::Generic);
 
-use HTML::TableExtract 2.07;
+use HTTP::Cookies;
 use Date::Manip;
 
-# Example for HTML output:
+# https://query1.finance.yahoo.com/v7/finance/download/IBM?period1=1495391410&period2=1498069810&interval=1d&events=history&crumb=bB6k340lPXt
+# https://query1.finance.yahoo.com/v7/finance/download/IBM?period1=993096000&period2=1498017600&interval=1wk&events=history&crumb=bB6k340lPXt
+# https://query1.finance.yahoo.com/v7/finance/download/IBM?period1=993096000&period2=1498017600&interval=1mo&events=history&crumb=bB6k340lPXt
 #
-# http://finance.yahoo.com/q/hp?s=IBM&a=00&b=2&c=1800&d=04&e=8&f=2005&g=d&z=66&y=66
+# Dividends:
+# https://query1.finance.yahoo.com/v7/finance/download/IBM?period1=993096000&period2=1498017600&interval=1d&events=div&crumb=bB6k340lPXt
 #
-#   * s - ticker symbol
-#   * a - start month
-#   * b - start day
-#   * c - start year
-#   * d - end month
-#   * e - end day
-#   * f - end year
-#   * g - resolution (e.g. 'd' is daily, 'w' is weekly, 'm' is monthly)
-#   * y is the offset (cursor) from the start date
-#   * z is the number of results to return starting at the cursor (66
-#     maximum, apparently)
-#
-# Note alternate url:
-# http://table.finance.yahoo.com/d?a=1&b=1&c=1800&d=3&e=1&f=2006&s=yhoo&y=200&g=d
-#
-# Example for CSV output:
-#
-# http://ichart.finance.yahoo.com/table.csv?s=IBM&a=00&b=2&c=1800&d=04&e=8&f=2005&g=d&ignore=.csv
-#
-# (historically could use table.finance.yahoo.com as well)
-#
-# Note that Yahoo implements month numbering with Jan=0 and Dec=11.
-#
-# For CSV output, date ranges are unlimited; the output is adjusted and
-# does not include any split or dividend notices.
-#
-# URL for splits and dividends:
-#
-# These are either extracted from within the historical quote results
-# (non_quote_row()) or found directly:
-#
-# http://finance.yahoo.com/q/hp?s=IBM&a=00&b=2&c=1800&d=04&e=8&f=2005&g=v
-# http://table.finance.yahoo.com/table.csv?s=IBM&a=00&b=2&c=1800&d=04&e=8&f=2005&g=v&ignore=.csv
-#
-# Example URL for weekly:
-#
-# http://finance.yahoo.com/q/hp?s=IBM&a=00&b=2&c=1962&d=01&e=27&f=2006&g=w
-#
-# Example URL for monthly:
-#
-# http://finance.yahoo.com/q/hp?s=IBM&a=00&b=2&c=1962&d=01&e=27&f=2006&g=m
+# Splits:
+# https://query1.finance.yahoo.com/v7/finance/download/NKE?period1=993096000&period2=1498017600&interval=1d&events=split&crumb=bB6k340lPXt
 
 sub new {
   my $that = shift;
   my $class = ref($that) || $that;
   my %parms = @_;
 
-  $parms{parse_mode} ||= 'csv';
+  $parms{parse_mode} = 'csv';
+
+  my $jar = HTTP::Cookies->new;
+  $jar->set_cookie(
+    undef,                      # version
+    "B",                        # key
+    "24emijlcklb9n&b=3&s=hp",   # val
+    "/",                        # path
+    ".yahoo.com",               # domain
+    undef,                      # port
+    1,                          # path_spec
+    1,                          # secure
+    24*60*60,                   # maxage
+    0                           # discard
+  );
+  $parms{ua_params} = { cookie_jar => $jar };
 
   my $self = __PACKAGE__->SUPER::new(%parms);
   bless $self, $class;
@@ -71,104 +50,21 @@ sub new {
   $self;
 }
 
-# override these for other Yahoo sites
-sub url_base_csv    { 'http://ichart.finance.yahoo.com/table.csv' }
-sub url_base_html   { 'http://finance.yahoo.com/q/hp' }
-
 sub granularities { qw( daily weekly monthly ) }
-
-# Yahoo can fetch dividends and splits. They can be extracted from
-# regular quote results or queried directly.
-
-#sub html_parser {
-#  my($self, %parms) = @_;
-#  my $target_mode = $parms{target_mode} || $self->target_mode;
-#  return $self->SUPER::html_parser(%parms) unless $target_mode eq 'split';
-#  sub {
-#    my $data = shift;
-#    my $html_string;
-#    if (ref $data) {
-#      local($/);
-#      $html_string = <$data>;
-#    }
-#    else {
-#      $html_string = $data;
-#    }
-#    my %te_parms = (
-#      headers => ['Splits:'],
-#      debug   => $self->{debug},
-#    );
-#    my $te = HTML::TableExtract->new(%te_parms);
-#    $te->parse($html_string);
-#    my $table = $te->first_table_found || return [];
-#    my($split_line) = grep(defined && /split/i, $table->hrow);
-#    $split_line =~ s/^\s*splits:?\s*//i;
-#    my @rows;
-#    foreach (grep(/\w+/, split(/\]\s*,\s+/, $split_line))) {
-#      s/\s+$//;
-#      next if /none/i;
-#      next unless s/\s*\[(\d+):(\d+).*$//;
-#      my($post, $pre) = ($1, $2);
-#      my $date = ParseDate($_)
-#        or croak "Problem parsing date string '$_'\n";
-#      push(@rows, [$date, $post, $pre]);
-#    }
-#    \@rows;
-#  };
-#}
 
 sub labels {
   my $self = shift;
   my %parms = @_;
   my $target_mode = $parms{target_mode} || $self->target_mode;
-  my $parse_mode  = $parms{parse_mode}  || $self->parse_mode;
   my @labels;
   if ($target_mode eq 'split') {
-    @labels = qw( date open );
-    $self->parse_mode('html');
+    @labels = qw( date stock );
   }
   else {
     @labels = $self->SUPER::labels(%parms);
     push(@labels, 'adj') if $target_mode eq 'quote';
   }
   @labels;
-}
-
-sub extractors {
-  # Override. If we are pulling CSV, save some time by skipping
-  # extraction attempts
-  my $self  = shift;
-  my %parms = @_;
-  my $target_mode = $parms{target_mode} || $self->target_mode;
-  my $parse_mode  = $parms{parse_mode}  || $self->parse_mode;
-  if ($target_mode eq 'split') {
-    $parse_mode = 'html';
-    $self->parse_mode($parse_mode);
-  }
-  return () if $parse_mode eq 'csv';
-  my %extractors;
-  my $date_column = $self->label_column('date');
-  my $split_column = 1;
-  $extractors{'split'} = sub {
-    my $row = shift;
-    die "row as array ref required" unless ref $row;
-    # example split: "3 : 1 Stock Split"
-    my($post, $pre) = $row->[$split_column] =~ /(\d+)\s*:\s*(\d+).*Split/i;
-    return undef unless $post && $pre;
-    [ $row->[$date_column], $post, $pre ];
-  };
-  #my $div_column = 1;
-  #$extractors{dividend} = sub {
-  #  # Get a row as array ref, see if it contains dividend info. If so,
-  #  # return another array ref with the extracted info.
-  #  my $row = shift;
-  #  die "row as array ref required\n" unless ref $row;
-  #  # example dividend: "$0.01 Cash Dividend"
-  #  my($div) = $row->[$div_column] =~ /\$*(\d*\.\d+).*Dividend/i;
-  #  return undef unless defined $div;
-  #  [ $row->[$date_column], $row->[$div_column] ];
-  #};
-  %extractors;
 }
 
 sub url_maker {
@@ -195,46 +91,44 @@ sub url_maker {
     ($start_date, $end_date) = ($end_date, $start_date);
   }
 
-  if ($target_mode eq 'split') {
-    $self->parse_mode($parse_mode = 'html');
-  }
-  else {
-    $self->parse_mode($parse_mode = 'csv');
-  }
-
-  my $base_url = $parse_mode eq 'csv' ? $self->url_base_csv() :
-                                        $self->url_base_html();
+  my $host = "query1.finance.yahoo.com";
+  my $base_url = "https://$host/v7/finance/download/$ticker?";
   my @base_parms;
   if ($start_date) {
     my($y, $m, $d) = $self->ymd($start_date);
-    $m = sprintf("%02d", $m - 1);
-    push(@base_parms, "a=$m", "b=$d", "c=$y");
+    my $ts = Date_SecsSince1970($m, $d, $y, 0, 0, 0);
+    push(@base_parms, "period1=$ts");
   }
   if ($end_date) {
     my($y, $m, $d) = $self->ymd($end_date);
-    $m = sprintf("%02d", $m - 1);
-    push(@base_parms, "d=$m", "e=$d", "f=$y");
+    my $ts = Date_SecsSince1970($m, $d, $y, 0, 0, 0);
+    $ts += 24*60*60;
+    push(@base_parms, "period2=$ts");
   }
-  my $g = $target_mode eq 'quote' ? $grain : 'v';
-  $ticker ||= 'BOOLEAN';
-  push(@base_parms, "g=$g", "s=$ticker");
-  
-  if ($parse_mode eq 'html') {
-    my $cursor = 0;
-    my $window = 66;
-    return sub {
-      my $url = $base_url . '?' .
-        join('&', @base_parms,
-                 "z=$window", "y=$cursor");
-      $cursor += $window;
-      $url;
-    }
+
+  my $interval = "1d";
+  if ($grain eq 'w') {
+    $interval = "1wk";
   }
-  else {
-    my @urls = $base_url .  '?' . join('&', @base_parms);
-    $urls[0] .= '&ignore=.csv' if $parse_mode eq 'csv';
-    return sub { pop @urls }
+  elsif ($grain eq 'm') {
+    $interval = "1mo";
   }
+  push(@base_parms, "interval=$interval");
+
+  if ($target_mode eq "quote") {
+    push(@base_parms, "events=history");
+  }
+  elsif ($target_mode eq "dividend") {
+    push(@base_parms, "events=div");
+  }
+  elsif ($target_mode eq "split") {
+    push(@base_parms, "events=split");
+  }
+
+  push(@base_parms, "crumb=bB6k340lPXt");
+
+  my @urls = $base_url . join('&', @base_parms);
+  return sub { pop @urls };
 }
 
 1;
