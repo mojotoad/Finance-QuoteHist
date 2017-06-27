@@ -9,7 +9,6 @@ $VERSION = '1.06';
 use Finance::QuoteHist::Generic;
 @ISA = qw(Finance::QuoteHist::Generic);
 
-use HTTP::Cookies;
 use Date::Manip;
 
 # https://query1.finance.yahoo.com/v7/finance/download/IBM?period1=1495391410&period2=1498069810&interval=1d&events=history&crumb=bB6k340lPXt
@@ -28,24 +27,34 @@ sub new {
   my %parms = @_;
 
   $parms{parse_mode} = 'csv';
-
-  my $jar = HTTP::Cookies->new;
-  $jar->set_cookie(
-    undef,                      # version
-    "B",                        # key
-    "24emijlcklb9n&b=3&s=hp",   # val
-    "/",                        # path
-    ".yahoo.com",               # domain
-    undef,                      # port
-    1,                          # path_spec
-    1,                          # secure
-    24*60*60,                   # maxage
-    0                           # discard
-  );
-  $parms{ua_params} = { cookie_jar => $jar };
+  $parms{ua_params} ||= {};
+  $parms{ua_params}{cookie_jar} ||= {};
 
   my $self = __PACKAGE__->SUPER::new(%parms);
   bless $self, $class;
+
+  # set initial cookie (the cookie crumbs are hashed out of this)
+  # https://finance.yahoo.com/quote/IBM/history
+  my $ticker = $parms{symbols}[0];
+  my $html = $self->fetch("https://finance.yahoo.com/quote/$ticker/history");
+
+  # extract the cookie crumb
+  my %crumbs;
+  for my $c ($html =~ /"crumb"\s*:\s*"([^"]+)"/g) {
+    next if $c =~ /[{}]/;
+    $c =~ s/\\u002F/\//;
+    ++$crumbs{$c};
+  }
+  my $crumb = '';
+  my $max = 0;
+  for my $c (keys %crumbs) {
+    if ($crumbs{$c} >= $max) {
+      $crumb = $c;
+      $max = $crumbs{$c};
+    }
+  }
+
+  $self->{crumb} = $crumb;
 
   $self;
 }
@@ -125,7 +134,7 @@ sub url_maker {
     push(@base_parms, "events=split");
   }
 
-  push(@base_parms, "crumb=bB6k340lPXt");
+  push(@base_parms, "crumb=" . $self->{crumb});
 
   my @urls = $base_url . join('&', @base_parms);
   return sub { pop @urls };

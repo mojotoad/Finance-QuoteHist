@@ -149,7 +149,7 @@ sub new {
   elsif ($parms{auto_proxy}) {
     $ua_params->{env_proxy} = 1 if $ENV{http_proxy};
   }
-  $self->{ua} = LWP::UserAgent->new(%$ua_params);
+  $self->{ua} ||= LWP::UserAgent->new(%$ua_params);
 
   if ($self->granularity !~ /^d/i) {
     $start_date = $self->snap_start_date($start_date);
