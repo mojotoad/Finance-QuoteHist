@@ -20,10 +20,6 @@ use LWP::UserAgent;
 use HTTP::Request;
 use Date::Manip;
 
-use vars qw($VERSION);
-
-$VERSION = '1.21';
-
 my $CSV_XS_Class = 'Text::CSV_XS';
 my $CSV_PP_Class = 'Text::CSV_PP';
 my $CSV_Class = $CSV_XS_Class;

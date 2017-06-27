@@ -1,10 +1,8 @@
 package Finance::QuoteHist::Google;
 
 use strict;
-use vars qw(@ISA $VERSION);
+use vars qw(@ISA);
 use Carp;
-
-$VERSION = '1.01';
 
 use Finance::QuoteHist::Generic;
 @ISA = qw(Finance::QuoteHist::Generic);

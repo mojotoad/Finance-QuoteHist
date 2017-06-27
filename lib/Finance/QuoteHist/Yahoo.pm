@@ -1,10 +1,8 @@
 package Finance::QuoteHist::Yahoo;
 
 use strict;
-use vars qw(@ISA $VERSION);
+use vars qw(@ISA);
 use Carp;
-
-$VERSION = '1.06';
 
 use Finance::QuoteHist::Generic;
 @ISA = qw(Finance::QuoteHist::Generic);
@@ -35,7 +33,8 @@ sub new {
 
   # set initial cookie (the cookie crumbs are hashed out of this)
   # https://finance.yahoo.com/quote/IBM/history
-  my $ticker = $parms{symbols}[0];
+  my $ticker = $parms{symbols};
+  $ticker = $ticker->[0] if ref $ticker eq 'ARRAY';
   my $html = $self->fetch("https://finance.yahoo.com/quote/$ticker/history");
 
   # extract the cookie crumb

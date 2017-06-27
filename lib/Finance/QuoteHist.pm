@@ -10,7 +10,7 @@ use Carp;
 
 use Finance::QuoteHist::Generic;
 
-$VERSION = '1.24';
+$VERSION = '1.25';
 
 my @DEFAULT_ENGINES = qw(
   Finance::QuoteHist::Yahoo
