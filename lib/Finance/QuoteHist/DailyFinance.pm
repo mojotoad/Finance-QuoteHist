@@ -1,8 +1,10 @@
 package Finance::QuoteHist::DailyFinance;
 
 use strict;
-use vars qw(@ISA);
+use vars qw(@ISA $VERSION);
 use Carp;
+
+$VERSION = "1.00";
 
 use constant DEBUG => 0;
 
