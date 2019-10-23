@@ -60,7 +60,7 @@ for my $s (@sources) {
       save_res($m, $q_sym, $q_start, $q_end, \@res, $f);
     }
     else {
-      die "NO RESULTS: $m $g quotes\n";
+      print STDERR "NO RESULTS: $m $g quotes\n";
     }
   }
   $q = new_qh($m, $s_sym, $s_start, $s_end);
